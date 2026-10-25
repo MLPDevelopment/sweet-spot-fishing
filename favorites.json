@@ -1,0 +1,23 @@
+{
+  "Port O'Connor": {
+    "guides": [
+      {
+        "name": "Kim Goulden Fishing",
+        "description": "Wade and drift fishing with artificial lures",
+        "url": "https://www.portoconnorfishingtrip.com/"
+      }
+    ],
+    "lodging": [],
+    "restaurants": []
+  },
+  "Port Aransas": {
+    "guides": [],
+    "lodging": [],
+    "restaurants": []
+  },
+  "South Padre Island": {
+    "guides": [],
+    "lodging": [],
+    "restaurants": []
+  }
+}

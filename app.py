@@ -2,6 +2,7 @@
 from datetime import date, timedelta, datetime
 import html
 import base64
+import json
 from pathlib import Path
 import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
@@ -330,7 +331,7 @@ with st.expander('Data sources and model limitations'):
     )
 
 # Seasonal species are reference information, not automatic catch predictions.
-st.markdown('<div class="sectionhead">Texas Gulf fishing seasons</div><div class="muted">Original illustrated Gulf Coast species. Seasonal patterns are approximate, vary by bay and weather, and are not fishing regulations.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sectionhead">Texas Gulf fishing seasons</div>', unsafe_allow_html=True)
 seasonal = [
     ('Bull redfish run', 'bull_redfish.png', 'September–October', 'Fall concentrations of mature red drum near passes and Gulf-facing shorelines.', 'https://tpwd.texas.gov/huntwild/wild/species/reddrum/'),
     ('Redfish', 'redfish.png', 'Year-round', 'Inshore red drum are available throughout the year; shallow-water patterns often shine in spring and fall.', 'https://tpwd.texas.gov/huntwild/wild/species/reddrum/'),
@@ -344,26 +345,56 @@ for column, (species, filename, season, description, url) in zip(season_cols, se
         with st.container(border=True):
             st.image(str(ASSETS / filename), use_container_width=True)
             st.markdown(f'**{species}**')
-            st.markdown(f'<span class="smallbadge">{season}</span>', unsafe_allow_html=True)
+            st.caption(season)
             st.caption(description)
-            st.markdown(f'[Species information]({url})')
+            st.markdown(f'[Species details ↗]({url})')
 
-# Location-coded favorites live below the forecast. No invented recommendations.
-st.markdown('<div class="sectionhead">My coastal favorites</div><div class="muted">Reserved for your own guides, lodging and restaurants. Each destination keeps its own color and links.</div>', unsafe_allow_html=True)
+# Favorite data lives in a small JSON file editable through GitHub's pencil icon.
+try:
+    favorites = json.loads((Path(__file__).parent / 'favorites.json').read_text(encoding='utf-8'))
+except (OSError, ValueError):
+    favorites = {}
+
+st.markdown('<div class="sectionhead">My coastal favorites</div>', unsafe_allow_html=True)
+st.caption('Guides, lodging and restaurants organized by fishing destination.')
+BANNER_FILES = {
+    "Port O'Connor": 'port_oconnor_banner.jpg',
+    'Port Aransas': 'port_aransas_banner.jpg',
+    'South Padre Island': 'south_padre_banner.jpg',
+}
+GROUP_NAMES = [('guides', 'Fishing guides'), ('lodging', 'Lodging'), ('restaurants', 'Restaurants')]
 for favorite_name, (accent, background) in LOCATION_COLORS.items():
-    st.markdown(
-        f'<div style="border-left:6px solid {accent};background:{background};padding:13px 18px;'
-        f'border-radius:12px;margin:17px 0 8px">'
-        f'<div style="font-size:1.2rem;font-weight:800;color:{accent}">{html.escape(favorite_name)}</div></div>',
-        unsafe_allow_html=True,
+    banner_file = ASSETS / BANNER_FILES[favorite_name]
+    encoded = base64.b64encode(banner_file.read_bytes()).decode('ascii') if banner_file.exists() else ''
+    bgstyle = (
+        f'background-image:linear-gradient(90deg,rgba(5,36,43,.78),rgba(5,36,43,.15)),url(data:image/jpeg;base64,{encoded});'
+        if encoded else f'background:{accent};'
     )
-    guide_col, stay_col, food_col = st.columns(3, gap='medium')
-    for col, title, symbol in [(guide_col, 'Fishing guides', '🎣'), (stay_col, 'Lodging', '🏡'), (food_col, 'Restaurants', '🍽️')]:
+    st.markdown(
+        '<div style="height:118px;border-radius:15px;margin:24px 0 10px;'
+        f'background-size:cover;background-position:center;{bgstyle}'
+        'display:flex;align-items:end;padding:18px 22px;">'
+        f'<div style="font-family:Georgia,serif;font-size:1.65rem;font-weight:700;color:white">{html.escape(favorite_name)}</div>'
+        '</div>',unsafe_allow_html=True)
+    groups = favorites.get(favorite_name, {})
+    cols = st.columns(3, gap='medium')
+    for col,(key,title) in zip(cols,GROUP_NAMES):
         with col:
-            with st.container(border=True):
-                st.markdown(f'**{symbol} {title}**')
-                st.caption('Your picks will appear here with a photo and direct link.')
+            st.markdown(f'<div style="font-weight:800;color:{accent};margin:.25rem 0 .45rem">{title}</div>',unsafe_allow_html=True)
+            entries = groups.get(key, [])
+            if not entries:
+                st.caption('Add a favorite when ready.')
+            for entry in entries:
+                label=html.escape(str(entry.get('name','Favorite')))
+                desc=html.escape(str(entry.get('description','')))
+                url=str(entry.get('url',''))
+                if url.startswith(('https://','http://')):
+                    st.markdown(f'**[{label}]({url})**')
+                else:
+                    st.markdown(f'**{label}**')
+                if desc:
+                    st.caption(desc)
 
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V1.8 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V1.9 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
