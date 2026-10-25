@@ -33,7 +33,18 @@
     "restaurants": []
   },
   "South Padre Island": {
-    "guides": [],
+    "guides": [
+      {
+        "name": "Captain Brian Barrera",
+        "description": "Inshore fishing on the Lower Laguna Madre; snook, redfish, trout and tarpon",
+        "url": "https://www.inshorefishingsouthpadre.com/"
+      },
+      {
+        "name": "Captain Mike Knox | Blast to Cast",
+        "description": "Guided South Padre Island bay fishing for redfish, trout, flounder and more",
+        "url": "https://blasttocast.com/"
+      }
+    ],
     "lodging": [],
     "restaurants": []
   }
