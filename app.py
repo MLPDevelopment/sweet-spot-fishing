@@ -8,6 +8,9 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
+APP_VERSION = "2.1 CLEAN REFRESH"
+BUILD_ID = "2026-10-25-v21"
+
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
 
@@ -135,6 +138,8 @@ def moon_icon(name):
 
 # The illustrated banner is an authored asset (including its title lettering).
 # A second option uses the family's original photo, with real HTML heading text.
+st.markdown(f'<div style="font-size:14px;font-weight:800;letter-spacing:.07em;color:#156e70;padding:8px 0">PUTEY’S BAY FISHING OUTLOOK • V{APP_VERSION} • BUILD {BUILD_ID}</div>', unsafe_allow_html=True)
+
 hero_choice = st.session_state.get('hero_choice', 'Illustrated sunrise')
 with st.expander('Header photograph', expanded=False):
     st.radio('Choose banner', ['Illustrated sunrise', 'Original wading photograph'], key='hero_choice', horizontal=True)
@@ -240,7 +245,7 @@ for offset in range(10):
         r = lookup[(dtstr, name)]
         score = r['score']
         star = ' *' if r['coverage_pct'] < 85 else ''
-        label = 'Excluded' if weekend else ('No data' if score is None else f"{score:.1f}{star}  {'★' if score >= 8 and r['eligible_for_alert'] else '·'}")
+        label = 'Excluded' if weekend else ('No data' if score is None else f"{score:.1f}{star}  {'★' if r['eligible_for_alert'] else '·'}")
         with col:
             btn_type = 'primary' if st.session_state.selected == (dtstr, name) and not weekend else 'secondary'
             if st.button(label, key=f'cell_{dtstr}_{name}', use_container_width=True, type=btn_type):
@@ -327,7 +332,7 @@ with st.expander('Data sources and model limitations'):
     st.write(
         'Morning weather uses 7–11 a.m. rather than exact sunrise. NOAA station tide movement is a proxy for back-bay circulation, not current velocity. '
         'The moonlight score is an experimental phase/cloud proxy without moon elevation. Water temperature is shown using near-coast marine guidance when available. '
-        'Salinity, water clarity, and red tide are not scored. Ratings are not validated catch predictions.'
+        'Salinity, water clarity, and red tide are not scored. Ratings are not validated catch predictions. Regional wind direction is a proxy, not location-specific fetch modeling.'
     )
 
 # Seasonal species are reference information, not automatic catch predictions.
@@ -397,4 +402,4 @@ for favorite_name, (accent, background) in LOCATION_COLORS.items():
 
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V1.9 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V2.1 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")

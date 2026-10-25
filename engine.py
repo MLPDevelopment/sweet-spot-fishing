@@ -101,7 +101,7 @@ def score_weather(weather, day, lunar_illumination=None, water_temp_f=None):
         samples = [(float(x), int(h['time'][i][11:13])) for i in indexes
                    if (x := value_at(h, 'wind_speed_10m', i)) is not None]
         scores['Wind & drift'] = mean(hourly_score(speed, hour) for speed, hour in samples)
-        gust_penalty = min(2.0, max(0, (gust or wind) - wind - 8) * .18)
+        gust_penalty = min(3.0, max(0, (gust or wind) - wind - 5) * .32)
         directions = [float(x) % 360 for i in indexes
                       if (x := value_at(h, 'wind_direction_10m', i)) is not None]
         direction_penalty, bearing_text = 0, 'unknown'
@@ -112,11 +112,11 @@ def score_weather(weather, day, lunar_illumination=None, water_temp_f=None):
             bearing_text = ['N','NE','E','SE','S','SW','W','NW'][round(bearing/45) % 8]
             turn = max(abs((d - directions[0] + 180) % 360 - 180) for d in directions)
             if wind >= 8 and turn > 75:
-                direction_penalty += .9
+                direction_penalty += 1.5
             elif wind >= 8 and turn > 45:
-                direction_penalty += .4
-            if wind >= 12 and (bearing >= 315 or bearing <= 45):
                 direction_penalty += .7
+            if wind >= 12 and (bearing >= 315 or bearing <= 45):
+                direction_penalty += 1.1
         scores['Wind & drift'] = clamp(scores['Wind & drift'] - gust_penalty - direction_penalty)
         descriptions['Wind & drift'] = (
             f'Wind 7–11 a.m.: {wind:.1f} mph mean, {first:.1f} mph early → {last:.1f} mph late; '
@@ -129,6 +129,8 @@ def score_weather(weather, day, lunar_illumination=None, water_temp_f=None):
             flags.append('Very strong gusts; rough-water comfort cap applies')
         if wind >= 20:
             flags.append('Sustained morning winds >=20 mph; rough-water comfort cap applies')
+        if last is not None and last >= 18:
+            flags.append('Late-morning wind >=18 mph: likely uncomfortable chop; opportunity cap applies')
 
     if temp is not None:
         comfort = clamp(10 - max(0, 60 - temp) * .48 - max(0, temp - 78) * .36)
@@ -225,7 +227,9 @@ def calculate(day, location, weather, tide_predictions=None, lunar_illumination=
 
     complete_weight = sum(WEIGHTS[k] for k in factors)
     measured_sum = sum(WEIGHTS[k] * v for k, v in factors.items())
-    raw = round(measured_sum / complete_weight, 1) if complete_weight else None
+    # Reserve unknown factors at a neutral 5/10 rather than scaling favorable inputs to 100%.
+    # Keep score provisional when important measurements remain unavailable.
+    raw = round(measured_sum + (1 - complete_weight) * 5.0, 1) if complete_weight else None
 
     weekday = day.weekday()
     eligible = weekday in (1, 2, 3, 4)
@@ -236,12 +240,23 @@ def calculate(day, location, weather, tide_predictions=None, lunar_illumination=
         caps.append(8.5)
     if any('rough-water comfort cap applies' in f for f in flags):
         caps.append(4.0)
+    if any('opportunity cap applies' in f for f in flags):
+        caps.append(7.5)
     if 'Tide movement' not in factors:
         flags.append('NOAA tides unavailable: rating is weather-only')
-    if complete_weight < .70:
-        flags.append('Low input coverage: rating highly provisional')
+    if complete_weight < .80:
+        flags.append('Below 80% input coverage: not eligible for a Sweet Spot alert')
 
     final = round(min([raw] + caps), 1) if raw is not None else None
+    # The 8+ threshold requires strong wind/drift AND tide, not just pleasant weather.
+    wind_ok = factors.get('Wind & drift', 0) >= 7.0
+    tide_ok = factors.get('Tide movement', 0) >= 6.0
+    eco_ok = factors.get('Ecosystem stability', 0) >= 6.0
+    qualified = bool(wind_ok and tide_ok and eco_ok and complete_weight >= .80
+                     and not any('comfort cap' in f or 'opportunity cap' in f for f in flags))
+    if final is not None and final >= 8.0 and not qualified:
+        flags.append('Environmental estimate reached 8, but qualifying gates were not met (wind >=7, tides >=6, ecosystem >=6, coverage >=80%, no rough-water flags)')
+        final = 7.9
     if weekday in (5, 6):
         eligible = False
 
@@ -253,7 +268,7 @@ def calculate(day, location, weather, tide_predictions=None, lunar_illumination=
         'factors': factors,
         'reasons': reasons,
         'coverage_pct': round(complete_weight * 100),
-        'eligible_for_alert': bool(eligible and final is not None and final >= 8 and complete_weight >= .70 and 'Tide movement' in factors),
+        'eligible_for_alert': bool(eligible and final is not None and final >= 8 and qualified),
         'flags': flags,
         'weekday': day.strftime('%A'),
         'confidence': 'Lower (8–10 days)' if (day - date.today()).days >= 8 else 'Moderate (4–7 days)' if (day - date.today()).days >= 4 else 'Higher (1–3 days)',
