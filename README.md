@@ -1,33 +1,27 @@
-# Sweet Spot V1.4 — Coastal UI Refresh
+# Putey's Bay Fishing Outlook (V1.5)
 
-A polished 10-day Texas bay fishing forecast for Port O'Connor, Port Aransas and South Padre Island, retaining the existing live weather/NOAA tide and scoring model.
+This package updates the hosted Streamlit app with:
 
-## Updating your EXISTING Streamlit website
+- **Branding:** Putey's Bay Fishing Outlook
+- **10-day outlook:** Port O'Connor, Port Aransas, South Padre Island
+- **Daily conditions panel:** sunrise, sunset, air high/low, water temperature (when available), moon phase
+- **Live sources:** Open-Meteo weather, Open-Meteo marine temperature guidance, NOAA CO-OPS tides
+- **Scoring changes:** salinity omitted, water clarity omitted, red tide omitted
 
-1. Download and unzip `Sweet_Spot_V1_4_GitHub_Update.zip`.
-2. Open your GitHub repo: https://github.com/MLPDevelopment/sweet-spot-fishing
-3. Open the `app.py` file and click the pencil icon **Edit this file**.
-4. Replace its entire contents with the contents of the new `app.py` file from the ZIP.
-5. Click **Commit changes** and confirm. Your existing Streamlit website should redeploy automatically.
+## Update GitHub / Streamlit
 
-Or use GitHub **Add file → Upload files** and drag all six unzipped files to the repository root, then commit to replace matching filenames. If GitHub refuses a duplicate-file upload, use the pencil method for `app.py`.
+1. Download and extract this ZIP.
+2. Open the existing GitHub repository: `sweet-spot-fishing`.
+3. Use **Add file → Upload files** and upload the extracted files, replacing the existing files.
+4. Commit the changes.
+5. Streamlit should redeploy automatically.
 
-Your existing site address remains https://sweet-spot-fishing.streamlit.app/ . No new repository or Streamlit app is necessary.
+Main app file: `app.py`
 
-## What's new
-- Coastal-colored hero with improved typography and whitespace
-- Summary cards for the best eligible morning, top system and qualified candidates
-- Native clickable day × location scores (30 clickable cells)
-- Gray/excluded weekends and Monday recovery rules
-- Region tabs and a clearer selected-day details view
-- Factor progress indicators, explanations, input-coverage notices
-- Live refresh using existing data collection, no simulated forecast numbers
+## Notes
 
-## Limitations
-- Score logic and external integrations unchanged; this release is primarily visual.
-- The weather/tide calls still need to succeed on the Streamlit server.
-- Lunar data and ecosystem-stability inputs are provisional, measured salinity/water temperature still incomplete.
-- The site does not independently send email or text alerts; the separate ChatGPT task remains active.
-
-## Local tests for developers (optional)
-`pip install -r requirements.txt && pytest -q && streamlit run app.py`
+- Weekend days remain excluded from fishing recommendations.
+- Monday remains a recovery day capped at 7.0.
+- Friday remains capped at 8.5.
+- The moonlight factor remains experimental.
+- Water temperature is sourced from marine forecast guidance when available and may not exactly represent back-bay conditions.
