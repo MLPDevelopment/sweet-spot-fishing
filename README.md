@@ -1,32 +1,33 @@
-# Sweet Spot — hosted prototype (V1.3)
+# Sweet Spot V1.4 — Coastal UI Refresh
 
-A 10-day morning fishing outlook for Port O’Connor, Port Aransas, and South Padre Island.
+A polished 10-day Texas bay fishing forecast for Port O'Connor, Port Aransas and South Padre Island, retaining the existing live weather/NOAA tide and scoring model.
 
-## No-code deployment
+## Updating your EXISTING Streamlit website
 
-1. Create a GitHub repository named `sweet-spot-fishing` (private if preferred).
-2. Upload ALL files from this folder **to the repository root** (not within a nested folder).
-3. In [Streamlit Community Cloud](https://share.streamlit.io), click **Create app**, then **Yup, I have an app**.
-4. Choose the new repository, branch `main`, and **Main file path `app.py`**, then deploy.
-5. When the app loads, use **Refresh live forecasts** and check for missing-data warnings.
+1. Download and unzip `Sweet_Spot_V1_4_GitHub_Update.zip`.
+2. Open your GitHub repo: https://github.com/MLPDevelopment/sweet-spot-fishing
+3. Open the `app.py` file and click the pencil icon **Edit this file**.
+4. Replace its entire contents with the contents of the new `app.py` file from the ZIP.
+5. Click **Commit changes** and confirm. Your existing Streamlit website should redeploy automatically.
 
-If the GitHub web uploader does not accept a ZIP archive as source code, extract this package first and select the *individual* files, not the ZIP.
+Or use GitHub **Add file → Upload files** and drag all six unzipped files to the repository root, then commit to replace matching filenames. If GitHub refuses a duplicate-file upload, use the pencil method for `app.py`.
 
-## Notes
+Your existing site address remains https://sweet-spot-fishing.streamlit.app/ . No new repository or Streamlit app is necessary.
 
-- Server requests hourly weather from Open-Meteo and hourly station tide predictions from NOAA. External APIs must be reachable by the hosting service.
-- The first deployment requires checking which tide stations support `datum=MLLW` and hourly predictions. A missing feed is shown as an error, not fictional data.
-- Each day/location has selectable factor explanations, cited raw API links, and a stated data coverage percentage.
-- Water clarity is not rated. Water temperature and salinity are planned but not yet implemented; scores are explicitly provisional and prorated across available factors.
-- Red tide is not an automatic gate. User independently checks official notices if relevant.
-- The prior-night darkness hypothesis is experimental; present lunar estimate omits true moonrise/moonset.
-- This **does not** deploy or synchronize the separately scheduled ChatGPT alert.
-- Not a marine safety or navigation forecast. Always check local marine warnings and advisories before departure.
+## What's new
+- Coastal-colored hero with improved typography and whitespace
+- Summary cards for the best eligible morning, top system and qualified candidates
+- Native clickable day × location scores (30 clickable cells)
+- Gray/excluded weekends and Monday recovery rules
+- Region tabs and a clearer selected-day details view
+- Factor progress indicators, explanations, input-coverage notices
+- Live refresh using existing data collection, no simulated forecast numbers
 
-## Files
+## Limitations
+- Score logic and external integrations unchanged; this release is primarily visual.
+- The weather/tide calls still need to succeed on the Streamlit server.
+- Lunar data and ecosystem-stability inputs are provisional, measured salinity/water temperature still incomplete.
+- The site does not independently send email or text alerts; the separate ChatGPT task remains active.
 
-- `app.py`: Streamlit UI
-- `engine.py`: scoring rules
-- `sources.py`: remote data sources
-- `test_engine.py`: sanity checks
-- `requirements.txt`: packages Streamlit installs automatically
+## Local tests for developers (optional)
+`pip install -r requirements.txt && pytest -q && streamlit run app.py`
