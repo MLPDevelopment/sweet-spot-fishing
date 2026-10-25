@@ -1,11 +1,15 @@
 """Putey's Bay Fishing Outlook V1.5 with daily conditions panel."""
 from datetime import date, timedelta, datetime
 import html
+import base64
+from pathlib import Path
 import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
+ASSETS = Path(__file__).parent / "assets"
+
 
 st.markdown(
     '''<style>
@@ -128,10 +132,23 @@ def moon_icon(name):
     }.get(name, '🌙')
 
 
-st.markdown(
-    '''<div class="hero"><div class="eyebrow">THE TEXAS BAY FISHING INDEX</div><h1>Putey's Bay Fishing Outlook</h1><p>Find your kind of fishing morning. A personalized, 10-day coastal outlook for calm sunrises, moving tides and comfortable days on the bays.</p></div>''',
-    unsafe_allow_html=True,
-)
+# The illustrated banner is an authored asset (including its title lettering).
+# A second option uses the family's original photo, with real HTML heading text.
+hero_choice = st.session_state.get('hero_choice', 'Illustrated sunrise')
+with st.expander('Header photograph', expanded=False):
+    st.radio('Choose banner', ['Illustrated sunrise', 'Original wading photograph'], key='hero_choice', horizontal=True)
+hero_choice = st.session_state.hero_choice
+if hero_choice == 'Illustrated sunrise':
+    st.image(str(ASSETS / 'hero_illustrated.jpg'), use_container_width=True)
+else:
+    photo = base64.b64encode((ASSETS / 'hero_personal.jpg').read_bytes()).decode('ascii')
+    st.markdown(
+        '<div class="hero" style="min-height:270px; background:linear-gradient(90deg,rgba(2,27,40,.87),rgba(4,39,51,.54) 51%,rgba(4,39,51,.05)), url(data:image/jpeg;base64,'
+        + photo
+        + ') center 51%/cover;"><div class="eyebrow">THE TEXAS BAY FISHING INDEX</div><h1>Putey\'s Bay Fishing Outlook</h1>'
+        '<p>Find your kind of fishing morning. A personalized, 10-day coastal outlook.</p></div>',
+        unsafe_allow_html=True,
+    )
 
 left, right = st.columns([4, 1], vertical_alignment='center')
 with left:
@@ -189,25 +206,15 @@ if any(failures.values()):
             for issue in issues:
                 st.warning(f'{name}: {issue}')
 
-# Seasonal migration panel is informational and does not affect the score.
-season_tiles = [
-    ("BULL RED RUN", "Sep–Oct peak", "Adult reds gather near Gulf passes and jetties; not a back-bay prediction.", "https://tpwd.texas.gov/huntwild/wild/species/reddrum/", "#e9d5c0"),
-    ("SPECKLED TROUT", "Spring & summer shallows", "Trout shift with water temperature; fall can bring productive bird activity.", "https://tpwd.texas.gov/huntwild/wild/species/strout/", "#cfe3e0"),
-    ("FLOUNDER RUN", "Oct–Dec migration", "Fish collect near channels and passes when moving toward the Gulf.", "https://tpwd.texas.gov/huntwild/wild/species/flounder/", "#e8e2d5"),
-]
-st.markdown('<div class="sectionhead">Seasonal fishing calendar</div><div class="muted">Texas coastal patterns, not current catch reports or open-season regulations. Select a tile for TPWD species information.</div>', unsafe_allow_html=True)
-season_cols = st.columns(3, gap='small')
-for col, (name, season, message, url, color) in zip(season_cols, season_tiles):
-    with col:
-        st.markdown(
-            f'<a target="_blank" href="{url}" style="display:block;text-decoration:none;background:linear-gradient(125deg,{color},#ffffff);border:1px solid #dfe9e6;border-radius:17px;padding:17px 19px;min-height:157px;color:#26484d">'
-            f'<div style="font-size:.74rem;letter-spacing:.12em;font-weight:800">{name}</div>'
-            f'<div style="font-size:1.15rem;font-weight:800;margin:7px 0">{season}</div>'
-            f'<div style="font-size:.84rem;line-height:1.45">{message}</div></a>',
-            unsafe_allow_html=True,
-        )
-with st.expander('Future fishing guide and lodging links'):
-    st.write('Reserved for your preferred guides, lodging providers, and coastal services. We can add linked photo tiles when you select the businesses and images.')
+LOCATION_COLORS = {
+    "Port O'Connor": ('#156e70', '#e6f2f1'),
+    'Port Aransas': ('#b46d35', '#fcf1e8'),
+    'South Padre Island': ('#456aa1', '#eaf1fc'),
+}
+st.markdown('''<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;margin-bottom:2px">
+<span style="padding:7px 12px;background:#e6f2f1;color:#156e70;border-left:4px solid #156e70;border-radius:8px;font-weight:700;font-size:.8rem">Port O'Connor</span>
+<span style="padding:7px 12px;background:#fcf1e8;color:#a45c27;border-left:4px solid #b46d35;border-radius:8px;font-weight:700;font-size:.8rem">Port Aransas</span>
+<span style="padding:7px 12px;background:#eaf1fc;color:#456aa1;border-left:4px solid #456aa1;border-radius:8px;font-weight:700;font-size:.8rem">South Padre Island</span></div>''', unsafe_allow_html=True)
 
 st.markdown('<div class="sectionhead">Your 10-day outlook</div><div class="muted">Select any score to open its full explanation below. Gray days are excluded by your personal fishing schedule.</div>', unsafe_allow_html=True)
 if 'selected' not in st.session_state:
@@ -322,5 +329,41 @@ with st.expander('Data sources and model limitations'):
         'Salinity, water clarity, and red tide are not scored. Ratings are not validated catch predictions.'
     )
 
+# Seasonal species are reference information, not automatic catch predictions.
+st.markdown('<div class="sectionhead">Texas Gulf fishing seasons</div><div class="muted">Original illustrated Gulf Coast species. Seasonal patterns are approximate, vary by bay and weather, and are not fishing regulations.</div>', unsafe_allow_html=True)
+seasonal = [
+    ('Bull redfish run', 'bull_redfish.png', 'September–October', 'Fall concentrations of mature red drum near passes and Gulf-facing shorelines.', 'https://tpwd.texas.gov/huntwild/wild/species/reddrum/'),
+    ('Redfish', 'redfish.png', 'Year-round', 'Inshore red drum are available throughout the year; shallow-water patterns often shine in spring and fall.', 'https://tpwd.texas.gov/huntwild/wild/species/reddrum/'),
+    ('Speckled trout', 'trout.png', 'Spring–fall', 'Shallow grass-bed opportunities in warmer weather; fish shift habitat as temperatures change.', 'https://tpwd.texas.gov/huntwild/wild/species/strout/'),
+    ('Southern flounder', 'flounder.png', 'October–December', 'Autumn migration from bays toward passes and Gulf waters. Check current seasonal harvest rules.', 'https://tpwd.texas.gov/huntwild/wild/species/flounder/'),
+    ('Tarpon', 'tarpon.png', 'Summer–early fall', 'Warm-season Gulf Coast migratory opportunities, especially near passes and coastal waters.', 'https://tpwd.texas.gov/huntwild/wild/species/tarpon/'),
+]
+season_cols = st.columns(5, gap='small')
+for column, (species, filename, season, description, url) in zip(season_cols, seasonal):
+    with column:
+        with st.container(border=True):
+            st.image(str(ASSETS / filename), use_container_width=True)
+            st.markdown(f'**{species}**')
+            st.markdown(f'<span class="smallbadge">{season}</span>', unsafe_allow_html=True)
+            st.caption(description)
+            st.markdown(f'[Species information]({url})')
+
+# Location-coded favorites live below the forecast. No invented recommendations.
+st.markdown('<div class="sectionhead">My coastal favorites</div><div class="muted">Reserved for your own guides, lodging and restaurants. Each destination keeps its own color and links.</div>', unsafe_allow_html=True)
+for favorite_name, (accent, background) in LOCATION_COLORS.items():
+    st.markdown(
+        f'<div style="border-left:6px solid {accent};background:{background};padding:13px 18px;'
+        f'border-radius:12px;margin:17px 0 8px">'
+        f'<div style="font-size:1.2rem;font-weight:800;color:{accent}">{html.escape(favorite_name)}</div></div>',
+        unsafe_allow_html=True,
+    )
+    guide_col, stay_col, food_col = st.columns(3, gap='medium')
+    for col, title, symbol in [(guide_col, 'Fishing guides', '🎣'), (stay_col, 'Lodging', '🏡'), (food_col, 'Restaurants', '🍽️')]:
+        with col:
+            with st.container(border=True):
+                st.markdown(f'**{symbol} {title}**')
+                st.caption('Your picks will appear here with a photo and direct link.')
+
+
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V1.6 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V1.8 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
