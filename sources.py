@@ -17,7 +17,7 @@ def get_weather(region):
         'wind_speed_unit': 'mph',
         'hourly': ','.join([
             'temperature_2m', 'relative_humidity_2m', 'cloud_cover', 'precipitation',
-            'precipitation_probability', 'wind_speed_10m', 'wind_gusts_10m'
+            'precipitation_probability', 'wind_speed_10m', 'wind_gusts_10m', 'wind_direction_10m'
         ]),
         'daily': ','.join([
             'temperature_2m_max', 'temperature_2m_min', 'sunrise', 'sunset'

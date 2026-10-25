@@ -1,4 +1,4 @@
-# Putey's Bay Fishing Outlook (V1.5)
+# Putey's Bay Fishing Outlook (V1.6)
 
 This package updates the hosted Streamlit app with:
 
@@ -25,3 +25,7 @@ Main app file: `app.py`
 - Friday remains capped at 8.5.
 - The moonlight factor remains experimental.
 - Water temperature is sourced from marine forecast guidance when available and may not exactly represent back-bay conditions.
+
+## V1.6 changes
+
+Wind now rewards glassy mornings and a gradual build toward 15 mph. 15 mph maps to 5/10, 20 mph to 0/10 before gust and direction adjustments; this applies per hour, so a build to 15 mph late does not automatically score 5 for the whole morning. Directional shifts and brisk northerlies introduce small penalties (not a local fetch model). The app requests hourly wind direction. Seasonal TPWD tiles for bull reds, speckled trout, and flounder are informational and link to TPWD. A future guide/lodging section is reserved.

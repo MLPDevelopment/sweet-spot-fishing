@@ -1,6 +1,7 @@
 """Putey's Bay Fishing Outlook V1.5: transparent coastal fishing decision rules."""
 from datetime import date, datetime, timedelta
 from statistics import mean
+from math import atan2, cos, sin, radians, degrees
 
 WEIGHTS = {
     'Wind & drift': .20,
@@ -88,17 +89,46 @@ def score_weather(weather, day, lunar_illumination=None, water_temp_f=None):
     scores, descriptions, flags = {}, {}, []
 
     if wind is not None:
-        scores['Wind & drift'] = clamp(10 - 1.0 * abs(wind - 5) - max(0, (gust or wind) - 15) * .65)
-        if first is not None and last is not None and last >= first and first <= 5:
-            scores['Wind & drift'] = clamp(scores['Wind & drift'] + 1)
+        def hourly_score(speed, hour):
+            # Zero mph at sunrise is nearly ideal. 15 mph = 5; 20 mph = 0.
+            ideal = 2 if hour <= 8 else 5 if hour == 9 else 7
+            if speed <= ideal:
+                return clamp(10 - .12 * (ideal - speed))
+            if speed <= 15:
+                return clamp(10 - (speed - ideal) * 5 / (15 - ideal))
+            return clamp(5 - (speed - 15))
+
+        samples = [(float(x), int(h['time'][i][11:13])) for i in indexes
+                   if (x := value_at(h, 'wind_speed_10m', i)) is not None]
+        scores['Wind & drift'] = mean(hourly_score(speed, hour) for speed, hour in samples)
+        gust_penalty = min(2.0, max(0, (gust or wind) - wind - 8) * .18)
+        directions = [float(x) % 360 for i in indexes
+                      if (x := value_at(h, 'wind_direction_10m', i)) is not None]
+        direction_penalty, bearing_text = 0, 'unknown'
+        if directions:
+            x = mean(cos(radians(d)) for d in directions)
+            y = mean(sin(radians(d)) for d in directions)
+            bearing = (degrees(atan2(y, x)) + 360) % 360
+            bearing_text = ['N','NE','E','SE','S','SW','W','NW'][round(bearing/45) % 8]
+            turn = max(abs((d - directions[0] + 180) % 360 - 180) for d in directions)
+            if wind >= 8 and turn > 75:
+                direction_penalty += .9
+            elif wind >= 8 and turn > 45:
+                direction_penalty += .4
+            if wind >= 12 and (bearing >= 315 or bearing <= 45):
+                direction_penalty += .7
+        scores['Wind & drift'] = clamp(scores['Wind & drift'] - gust_penalty - direction_penalty)
         descriptions['Wind & drift'] = (
-            f'Average {wind:.1f} mph; peak forecast gust estimate {gust:.1f} mph; '
-            f'sunrise {first:.1f} mph → late morning {last:.1f} mph.'
-            if gust is not None and first is not None and last is not None
-            else f'Average {wind:.1f} mph.'
+            f'Wind 7–11 a.m.: {wind:.1f} mph mean, {first:.1f} mph early → {last:.1f} mph late; '
+            + (f'mean hourly gust forecast {gust:.1f} mph; ' if gust is not None else '')
+            + f'predominantly from {bearing_text}. Gust penalty {gust_penalty:.1f}, direction/shift penalty {direction_penalty:.1f}. '
+            + 'Profile rewards glassy sunrise followed by a gentle build to 15 mph. '
+            + 'Direction is a rough frontal/shift proxy; it does not model shoreline-specific fetch or waves.'
         )
-        if gust is not None and gust >= 24:
+        if gust is not None and gust >= 28:
             flags.append('Very strong gusts; rough-water comfort cap applies')
+        if wind >= 20:
+            flags.append('Sustained morning winds >=20 mph; rough-water comfort cap applies')
 
     if temp is not None:
         comfort = clamp(10 - max(0, 60 - temp) * .48 - max(0, temp - 78) * .36)
@@ -204,7 +234,7 @@ def calculate(day, location, weather, tide_predictions=None, lunar_illumination=
         caps.append(7.0)
     if weekday == 4:
         caps.append(8.5)
-    if any('Very strong gusts' in f for f in flags):
+    if any('rough-water comfort cap applies' in f for f in flags):
         caps.append(4.0)
     if 'Tide movement' not in factors:
         flags.append('NOAA tides unavailable: rating is weather-only')

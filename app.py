@@ -189,6 +189,26 @@ if any(failures.values()):
             for issue in issues:
                 st.warning(f'{name}: {issue}')
 
+# Seasonal migration panel is informational and does not affect the score.
+season_tiles = [
+    ("BULL RED RUN", "Sep–Oct peak", "Adult reds gather near Gulf passes and jetties; not a back-bay prediction.", "https://tpwd.texas.gov/huntwild/wild/species/reddrum/", "#e9d5c0"),
+    ("SPECKLED TROUT", "Spring & summer shallows", "Trout shift with water temperature; fall can bring productive bird activity.", "https://tpwd.texas.gov/huntwild/wild/species/strout/", "#cfe3e0"),
+    ("FLOUNDER RUN", "Oct–Dec migration", "Fish collect near channels and passes when moving toward the Gulf.", "https://tpwd.texas.gov/huntwild/wild/species/flounder/", "#e8e2d5"),
+]
+st.markdown('<div class="sectionhead">Seasonal fishing calendar</div><div class="muted">Texas coastal patterns, not current catch reports or open-season regulations. Select a tile for TPWD species information.</div>', unsafe_allow_html=True)
+season_cols = st.columns(3, gap='small')
+for col, (name, season, message, url, color) in zip(season_cols, season_tiles):
+    with col:
+        st.markdown(
+            f'<a target="_blank" href="{url}" style="display:block;text-decoration:none;background:linear-gradient(125deg,{color},#ffffff);border:1px solid #dfe9e6;border-radius:17px;padding:17px 19px;min-height:157px;color:#26484d">'
+            f'<div style="font-size:.74rem;letter-spacing:.12em;font-weight:800">{name}</div>'
+            f'<div style="font-size:1.15rem;font-weight:800;margin:7px 0">{season}</div>'
+            f'<div style="font-size:.84rem;line-height:1.45">{message}</div></a>',
+            unsafe_allow_html=True,
+        )
+with st.expander('Future fishing guide and lodging links'):
+    st.write('Reserved for your preferred guides, lodging providers, and coastal services. We can add linked photo tiles when you select the businesses and images.')
+
 st.markdown('<div class="sectionhead">Your 10-day outlook</div><div class="muted">Select any score to open its full explanation below. Gray days are excluded by your personal fishing schedule.</div>', unsafe_allow_html=True)
 if 'selected' not in st.session_state:
     st.session_state.selected = (results[0]['date'], list(REGIONS)[0])
@@ -303,4 +323,4 @@ with st.expander('Data sources and model limitations'):
     )
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V1.5 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V1.6 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Ratings use available-factor normalization. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
