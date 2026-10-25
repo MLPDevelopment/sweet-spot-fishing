@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.3 MOBILE FRIENDLY"
-BUILD_ID = "2026-10-25-v23"
+APP_VERSION = "2.4 TAP-TO-SELECT"
+BUILD_ID = "2026-10-25-v24"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -72,6 +72,8 @@ footer{display:none}
  .details .place{font-size:1.28rem}
  .details .score{font-size:2.5rem}
  .st-key-mobile_scoreboard [data-testid="stSelectbox"]{width:100%}
+ .st-key-mobile_scoreboard [data-testid="stButton"] button{min-height:51px!important;text-align:left!important;justify-content:flex-start!important;padding:11px 14px!important;font-size:1rem!important;border-radius:10px!important}
+ .st-key-mobile_scoreboard [data-testid="stButton"] button p{text-align:left!important;width:100%!important;font-weight:750!important}
 }
 </style>''',
     unsafe_allow_html=True,
@@ -271,28 +273,19 @@ with st.container(key="desktop_scoreboard"):
 with st.container(key="mobile_scoreboard"):
     st.markdown('**Phone-friendly daily scores**')
     mobile_region = st.selectbox('Fishing region', list(REGIONS), key='mobile_region', on_change=lambda: st.session_state.update(selected=(st.session_state.get('mobile_day',date.today()).isoformat(),st.session_state.mobile_region)))
-    mobile_rows = []
+    st.caption('Tap a day to see its detailed forecast below.')
     for offset in range(10):
         mobile_day = date.today() + timedelta(days=offset)
-        mobile_r = lookup[(mobile_day.isoformat(), mobile_region)]
+        mobile_dtstr = mobile_day.isoformat()
+        mobile_r = lookup[(mobile_dtstr, mobile_region)]
         excluded = mobile_day.weekday() >= 5
         mobile_score = 'Excluded' if excluded else ('No data' if mobile_r['score'] is None else f"{mobile_r['score']:.1f} / 10")
-        tag = '★ SWEET SPOT' if mobile_r['eligible_for_alert'] else ('WEEKEND' if excluded else 'FORECAST')
-        mobile_rows.append(
-            '<div class="mobile-day" style="display:flex;justify-content:space-between;align-items:center;gap:10px;'
-            'padding:12px 14px;border-bottom:1px solid #e2ebea;background:white">'
-            f'<div><div style="font-weight:800;color:#173943">{mobile_day:%a, %b %d}</div>'
-            f'<div style="font-size:.69rem;letter-spacing:.05em;color:#698087">{tag}</div></div>'
-            f'<div style="white-space:nowrap;font-size:1.12rem;font-weight:800;color:{"#a1aba9" if excluded else "#126e69"}">{mobile_score}</div>'
-            '</div>'
-        )
-    st.markdown('<div style="border:1px solid #e2ebea;border-radius:14px;overflow:hidden;margin-bottom:12px">'+''.join(mobile_rows)+'</div>', unsafe_allow_html=True)
-    mobile_days = [date.today()+timedelta(days=i) for i in range(10)]
-    mobile_date = st.selectbox('Show detailed forecast for', mobile_days, format_func=lambda d: d.strftime('%a, %b %d'), key='mobile_day', on_change=lambda: st.session_state.update(selected=(st.session_state.mobile_day.isoformat(),st.session_state.mobile_region)))
-    # Changes to the phone selection drive the same detail section as the desktop score buttons.
-    # Only commit the change in phone view; desktop detail selection is independent.
-    # The two views are both in Streamlit's DOM; only the relevant one is visible via CSS.
-    st.caption('Select a day above to examine its conditions in the detailed forecast below.')
+        tag = ' ★' if mobile_r['eligible_for_alert'] else ''
+        label = f"{mobile_day:%a, %b %d}    ·    {mobile_score}{tag}"
+        selected_mobile = st.session_state.selected == (mobile_dtstr, mobile_region)
+        if st.button(label, key=f'mobile_day_{mobile_dtstr}_{mobile_region}', use_container_width=True,
+                     type='primary' if selected_mobile else 'secondary'):
+            st.session_state.selected = (mobile_dtstr, mobile_region)
 
 st.caption('★ Qualified opportunity (subject to marine safety). * Under 85% weighted input coverage. Weekend scores are intentionally hidden; Monday is a recovery day.')
 name_tabs = st.tabs(list(REGIONS))
