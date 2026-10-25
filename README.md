@@ -1,12 +1,12 @@
-# Putey’s Bay Fishing Outlook V2.1 — clean refresh
+# Putey’s Bay Fishing Outlook V2.2 — real photograph + lodging favorites
 
-The ZIP contains application files at the top level, plus the `assets` folder. No nested `puteys_v19` directory.
+This is a visual/favorites-only update. **The V2.1 scoring engine remains unchanged.**
 
-1. Open https://github.com/MLPDevelopment/sweet-spot-fishing and select the **main** branch.
-2. Choose **Add file → Upload files** and drag in the extracted files and the entire `assets` folder. Verify paths start `assets/`.
-3. At the bottom, choose **Commit directly to the main branch** rather than creating a patch branch. Commit changes.
-4. If GitHub prevents overwriting files, use GitHub’s edit (pencil) button for those files or merge an update branch into main through a pull request.
-5. Open https://sweet-spot-fishing.streamlit.app/ and hard-refresh with Ctrl+Shift+R. In Streamlit app controls, reboot if necessary.
-6. Verify the page explicitly shows **V2.1 CLEAN REFRESH • BUILD 2026-10-25-v21**. If not, Streamlit is still running older files.
+- Replaces the generated title image with the actual user-supplied wide photo of the wading angler (`assets/hero_personal.jpg`). The site applies a modest dark overlay for heading legibility, with no AI retouching.
+- Adds Bay Flats Lodge (Seadrift, Port O’Connor area), Redfish Lodge Port O’Connor (the separate property at redfishpoc.com), and Redfish Lodge on Copano Bay (Rockport, Port Aransas/Aransas Bay area).
+- Ad-tracking parameters removed from the user's Port O’Connor URL. The originally supplied redfishlodge.com points to the Rockport property, NOT the Port O’Connor location.
+- Displays **V2.2 REAL PHOTO** prominently for deployment verification.
 
-Contains calibrated wind direction/gust scoring and 8+ qualification gates from V2.0, South Padre bridge aerial, species art, and favorites. Live forecast values may remain similar even when the deployment succeeds.
+## Install
+
+Open the existing GitHub repository, select **main**, and upload all files at the root while keeping the `assets/` directory intact. Commit **directly to main** or merge the pull request if GitHub requires one. Streamlit will redeploy. You may also update only `app.py`, `favorites.json`, and `assets/hero_personal.jpg` for this visual-only release.

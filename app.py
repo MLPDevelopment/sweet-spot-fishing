@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.1 CLEAN REFRESH"
-BUILD_ID = "2026-10-25-v21"
+APP_VERSION = "2.2 REAL PHOTO"
+BUILD_ID = "2026-10-25-v22"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -140,21 +140,15 @@ def moon_icon(name):
 # A second option uses the family's original photo, with real HTML heading text.
 st.markdown(f'<div style="font-size:14px;font-weight:800;letter-spacing:.07em;color:#156e70;padding:8px 0">PUTEY’S BAY FISHING OUTLOOK • V{APP_VERSION} • BUILD {BUILD_ID}</div>', unsafe_allow_html=True)
 
-hero_choice = st.session_state.get('hero_choice', 'Illustrated sunrise')
-with st.expander('Header photograph', expanded=False):
-    st.radio('Choose banner', ['Illustrated sunrise', 'Original wading photograph'], key='hero_choice', horizontal=True)
-hero_choice = st.session_state.hero_choice
-if hero_choice == 'Illustrated sunrise':
-    st.image(str(ASSETS / 'hero_illustrated.jpg'), use_container_width=True)
-else:
-    photo = base64.b64encode((ASSETS / 'hero_personal.jpg').read_bytes()).decode('ascii')
-    st.markdown(
-        '<div class="hero" style="min-height:270px; background:linear-gradient(90deg,rgba(2,27,40,.87),rgba(4,39,51,.54) 51%,rgba(4,39,51,.05)), url(data:image/jpeg;base64,'
-        + photo
-        + ') center 51%/cover;"><div class="eyebrow">THE TEXAS BAY FISHING INDEX</div><h1>Putey\'s Bay Fishing Outlook</h1>'
-        '<p>Find your kind of fishing morning. A personalized, 10-day coastal outlook.</p></div>',
-        unsafe_allow_html=True,
-    )
+# Genuine unaltered photograph supplied by the family, with only a subtle text-legibility overlay.
+photo = base64.b64encode((ASSETS / 'hero_personal.jpg').read_bytes()).decode('ascii')
+st.markdown(
+    '<div class="hero" style="min-height:285px;background:linear-gradient(90deg,rgba(2,27,40,.76),rgba(4,39,51,.36) 55%,rgba(4,39,51,.02)), url(data:image/jpeg;base64,'
+    + photo
+    + ') center 51%/cover;"><div class="eyebrow">THE TEXAS BAY FISHING INDEX</div><h1>Putey\'s Bay Fishing Outlook</h1>'
+    '<p>Find your kind of fishing morning. A personalized, 10-day coastal outlook.</p></div>',
+    unsafe_allow_html=True,
+)
 
 left, right = st.columns([4, 1], vertical_alignment='center')
 with left:
@@ -402,4 +396,4 @@ for favorite_name, (accent, background) in LOCATION_COLORS.items():
 
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V2.1 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V2.2 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")

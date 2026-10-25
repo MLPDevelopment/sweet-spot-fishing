@@ -7,12 +7,29 @@
         "url": "https://www.portoconnorfishingtrip.com/"
       }
     ],
-    "lodging": [],
+    "lodging": [
+      {
+        "name": "Bay Flats Lodge",
+        "description": "Fishing lodge in nearby Seadrift, Texas",
+        "url": "https://www.bayflatslodge.com/"
+      },
+      {
+        "name": "Redfish Lodge Port O'Connor",
+        "description": "Lodge, restaurant and fishing guides in Port O'Connor",
+        "url": "https://www.redfishpoc.com/"
+      }
+    ],
     "restaurants": []
   },
   "Port Aransas": {
     "guides": [],
-    "lodging": [],
+    "lodging": [
+      {
+        "name": "Redfish Lodge on Copano Bay",
+        "description": "Fishing lodge near Rockport, serving Copano and Aransas bays",
+        "url": "https://redfishlodge.com/"
+      }
+    ],
     "restaurants": []
   },
   "South Padre Island": {
