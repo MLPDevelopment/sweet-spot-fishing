@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.2 REAL PHOTO"
-BUILD_ID = "2026-10-25-v22"
+APP_VERSION = "2.3 MOBILE FRIENDLY"
+BUILD_ID = "2026-10-25-v23"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -52,7 +52,27 @@ div[data-testid="stTabs"] button {font-weight:700;font-size:1rem}
 [data-testid="stAlert"] {border-radius:12px}
 .smallbadge{display:inline-block;padding:.24rem .55rem;border-radius:999px;background:#eef6f5;border:1px solid #dbe9e7;color:#2f5c62;font-size:.82rem;font-weight:700}
 footer{display:none}
-@media(max-width:700px){.hero{padding:23px 20px}.hero h1{font-size:2.35rem}.block-container{padding:1rem}.summary{min-height:96px;padding:14px}.summary .large{font-size:1.25rem}.metric-card{min-height:90px;padding:12px}}
+/* Responsive forecast: desktop comparisons stay intact; phone gets a dedicated single-region view. */
+.st-key-mobile_scoreboard {display:none}
+@media(max-width:700px){
+ .st-key-desktop_scoreboard{display:none!important}
+ .st-key-mobile_scoreboard{display:block!important}
+ .block-container{padding:0.65rem 0.8rem 3rem!important;max-width:100vw!important}
+ .hero{padding:25px 20px!important;min-height:270px!important;border-radius:15px!important;background-position:65% 52%!important}
+ .hero h1{font-size:clamp(1.65rem,7.5vw,2.2rem)!important;max-width:260px!important;line-height:1.08!important}
+ .hero p{font-size:.85rem!important;max-width:225px!important}
+ .hero .eyebrow{font-size:.62rem!important;max-width:240px}
+ .summary{min-height:88px;padding:12px 14px;margin-bottom:2px}
+ .summary .large{font-size:1.25rem!important}
+ .summary .tiny{font-size:.65rem}
+ .sectionhead{font-size:1.2rem}
+ .metric-card{min-height:80px;padding:12px}
+ .metric-card .value{font-size:1.18rem}
+ .details{padding:16px}
+ .details .place{font-size:1.28rem}
+ .details .score{font-size:2.5rem}
+ .st-key-mobile_scoreboard [data-testid="stSelectbox"]{width:100%}
+}
 </style>''',
     unsafe_allow_html=True,
 )
@@ -220,30 +240,59 @@ st.markdown('<div class="sectionhead">Your 10-day outlook</div><div class="muted
 if 'selected' not in st.session_state:
     st.session_state.selected = (results[0]['date'], list(REGIONS)[0])
 
-headers = st.columns([1.15, 1.55, 1.55, 1.55], gap='small')
-for col, label in zip(headers, ['DAY', "PORT O’CONNOR", 'PORT ARANSAS', 'SOUTH PADRE']):
-    with col:
-        st.markdown(f'<div class="scorelabel">{label}</div>', unsafe_allow_html=True)
-
-for offset in range(10):
-    dt = date.today() + timedelta(days=offset)
-    dtstr = dt.isoformat()
-    weekend = dt.weekday() >= 5
-    cols = st.columns([1.15, 1.55, 1.55, 1.55], gap='small', vertical_alignment='center')
-    with cols[0]:
-        st.markdown(
-            f'<div style="font-weight:750;color:{"#a4acaa" if weekend else "#173943"}">{dt:%a} <span style="font-weight:500">{dt:%b %d}</span></div>',
-            unsafe_allow_html=True,
-        )
-    for col, name in zip(cols[1:], REGIONS):
-        r = lookup[(dtstr, name)]
-        score = r['score']
-        star = ' *' if r['coverage_pct'] < 85 else ''
-        label = 'Excluded' if weekend else ('No data' if score is None else f"{score:.1f}{star}  {'★' if r['eligible_for_alert'] else '·'}")
+with st.container(key="desktop_scoreboard"):
+    headers = st.columns([1.15, 1.55, 1.55, 1.55], gap='small')
+    for col, label in zip(headers, ['DAY', "PORT O’CONNOR", 'PORT ARANSAS', 'SOUTH PADRE']):
         with col:
-            btn_type = 'primary' if st.session_state.selected == (dtstr, name) and not weekend else 'secondary'
-            if st.button(label, key=f'cell_{dtstr}_{name}', use_container_width=True, type=btn_type):
-                st.session_state.selected = (dtstr, name)
+            st.markdown(f'<div class="scorelabel">{label}</div>', unsafe_allow_html=True)
+
+    for offset in range(10):
+        dt = date.today() + timedelta(days=offset)
+        dtstr = dt.isoformat()
+        weekend = dt.weekday() >= 5
+        cols = st.columns([1.15, 1.55, 1.55, 1.55], gap='small', vertical_alignment='center')
+        with cols[0]:
+            st.markdown(
+                f'<div style="font-weight:750;color:{"#a4acaa" if weekend else "#173943"}">{dt:%a} <span style="font-weight:500">{dt:%b %d}</span></div>',
+                unsafe_allow_html=True,
+            )
+        for col, name in zip(cols[1:], REGIONS):
+            r = lookup[(dtstr, name)]
+            score = r['score']
+            star = ' *' if r['coverage_pct'] < 85 else ''
+            label = 'Excluded' if weekend else ('No data' if score is None else f"{score:.1f}{star}  {'★' if r['eligible_for_alert'] else '·'}")
+            with col:
+                btn_type = 'primary' if st.session_state.selected == (dtstr, name) and not weekend else 'secondary'
+                if st.button(label, key=f'cell_{dtstr}_{name}', use_container_width=True, type=btn_type):
+                    st.session_state.selected = (dtstr, name)
+
+# A compact score view specifically for narrow portrait screens.
+# The desktop comparison remains available and unmodified on larger devices.
+with st.container(key="mobile_scoreboard"):
+    st.markdown('**Phone-friendly daily scores**')
+    mobile_region = st.selectbox('Fishing region', list(REGIONS), key='mobile_region', on_change=lambda: st.session_state.update(selected=(st.session_state.get('mobile_day',date.today()).isoformat(),st.session_state.mobile_region)))
+    mobile_rows = []
+    for offset in range(10):
+        mobile_day = date.today() + timedelta(days=offset)
+        mobile_r = lookup[(mobile_day.isoformat(), mobile_region)]
+        excluded = mobile_day.weekday() >= 5
+        mobile_score = 'Excluded' if excluded else ('No data' if mobile_r['score'] is None else f"{mobile_r['score']:.1f} / 10")
+        tag = '★ SWEET SPOT' if mobile_r['eligible_for_alert'] else ('WEEKEND' if excluded else 'FORECAST')
+        mobile_rows.append(
+            '<div class="mobile-day" style="display:flex;justify-content:space-between;align-items:center;gap:10px;'
+            'padding:12px 14px;border-bottom:1px solid #e2ebea;background:white">'
+            f'<div><div style="font-weight:800;color:#173943">{mobile_day:%a, %b %d}</div>'
+            f'<div style="font-size:.69rem;letter-spacing:.05em;color:#698087">{tag}</div></div>'
+            f'<div style="white-space:nowrap;font-size:1.12rem;font-weight:800;color:{"#a1aba9" if excluded else "#126e69"}">{mobile_score}</div>'
+            '</div>'
+        )
+    st.markdown('<div style="border:1px solid #e2ebea;border-radius:14px;overflow:hidden;margin-bottom:12px">'+''.join(mobile_rows)+'</div>', unsafe_allow_html=True)
+    mobile_days = [date.today()+timedelta(days=i) for i in range(10)]
+    mobile_date = st.selectbox('Show detailed forecast for', mobile_days, format_func=lambda d: d.strftime('%a, %b %d'), key='mobile_day', on_change=lambda: st.session_state.update(selected=(st.session_state.mobile_day.isoformat(),st.session_state.mobile_region)))
+    # Changes to the phone selection drive the same detail section as the desktop score buttons.
+    # Only commit the change in phone view; desktop detail selection is independent.
+    # The two views are both in Streamlit's DOM; only the relevant one is visible via CSS.
+    st.caption('Select a day above to examine its conditions in the detailed forecast below.')
 
 st.caption('★ Qualified opportunity (subject to marine safety). * Under 85% weighted input coverage. Weekend scores are intentionally hidden; Monday is a recovery day.')
 name_tabs = st.tabs(list(REGIONS))
@@ -396,4 +445,4 @@ for favorite_name, (accent, background) in LOCATION_COLORS.items():
 
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V2.2 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V2.3 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
