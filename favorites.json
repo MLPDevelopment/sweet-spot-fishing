@@ -9,11 +9,6 @@
     ],
     "lodging": [
       {
-        "name": "Bay Flats Lodge",
-        "description": "Fishing lodge in nearby Seadrift, Texas",
-        "url": "https://www.bayflatslodge.com/"
-      },
-      {
         "name": "Redfish Lodge Port O'Connor",
         "description": "Lodge, restaurant and fishing guides in Port O'Connor",
         "url": "https://www.redfishpoc.com/"
@@ -24,6 +19,11 @@
   "Port Aransas": {
     "guides": [],
     "lodging": [
+      {
+        "name": "Bay Flats Lodge",
+        "description": "Fishing lodge in nearby Seadrift, convenient to Port Aransas and surrounding bays",
+        "url": "https://www.bayflatslodge.com/"
+      },
       {
         "name": "Redfish Lodge on Copano Bay",
         "description": "Fishing lodge near Rockport, serving Copano and Aransas bays",
@@ -43,6 +43,11 @@
         "name": "Captain Mike Knox | Blast to Cast",
         "description": "Guided South Padre Island bay fishing for redfish, trout, flounder and more",
         "url": "https://blasttocast.com/"
+      },
+      {
+        "name": "Captain Luis Flendes",
+        "description": "South Padre Island guide",
+        "url": "https://share.google/Mfu497A9l9uYux5ky"
       }
     ],
     "lodging": [],
