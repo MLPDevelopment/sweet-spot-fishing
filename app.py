@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.5.2 SNOOK"
-BUILD_ID = "2026-10-26-v252"
+APP_VERSION = "2.5.3 FISH IMAGE FIX"
+BUILD_ID = "2026-10-26-v253"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -446,4 +446,4 @@ if (ASSETS / 'ortizowitz_farms.png').exists():
     st.image(str(ASSETS / 'ortizowitz_farms.png'), width=360)
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V2.5.1 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V2.5.3 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
