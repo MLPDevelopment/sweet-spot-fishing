@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.5 FAVORITES + SPONSOR"
-BUILD_ID = "2026-10-25-v25"
+APP_VERSION = "2.5.1 IMAGE FIX"
+BUILD_ID = "2026-10-26-v251"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -380,9 +380,9 @@ except (OSError, ValueError):
 st.markdown('<div class="sectionhead">My coastal favorites</div>', unsafe_allow_html=True)
 st.caption('Guides, lodging and restaurants organized by fishing destination.')
 BANNER_FILES = {
-    "Port O'Connor": None,
-    'Port Aransas': 'port_aransas_real.png',
-    'South Padre Island': 'south_padre_real.png',
+    "Port O'Connor": 'port_oconnor_banner.jpg',
+    'Port Aransas': 'port_aransas_banner.jpg',
+    'South Padre Island': 'south_padre_banner.jpg',
 }
 GROUP_NAMES = [('guides', 'Fishing guides'), ('lodging', 'Lodging'), ('restaurants', 'Restaurants')]
 for favorite_name, (accent, background) in LOCATION_COLORS.items():
@@ -390,7 +390,7 @@ for favorite_name, (accent, background) in LOCATION_COLORS.items():
     banner_file = (ASSETS / banner_name) if banner_name else None
     encoded = base64.b64encode(banner_file.read_bytes()).decode('ascii') if banner_file and banner_file.exists() else ''
     bgstyle = (
-        f'background-image:linear-gradient(90deg,rgba(5,36,43,.78),rgba(5,36,43,.18)),url(data:image/png;base64,{encoded});background-position:center;background-size:cover;'
+        f'background-image:linear-gradient(90deg,rgba(5,36,43,.78),rgba(5,36,43,.18)),url(data:image/jpeg;base64,{encoded});background-position:center;background-size:cover;'
         if encoded else f'background:linear-gradient(120deg,{accent},#7faeb0);'
     )
     st.markdown(
@@ -446,4 +446,4 @@ if (ASSETS / 'ortizowitz_farms.png').exists():
     st.image(str(ASSETS / 'ortizowitz_farms.png'), width=360)
 
 st.divider()
-st.caption("Putey's Bay Fishing Outlook V2.5 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
+st.caption("Putey's Bay Fishing Outlook V2.5.1 · Live weather, marine temperature guidance, and NOAA predicted tides when available. Missing components receive a neutral 5/10 provisional contribution; an 8+ alert requires wind, tide, ecosystem, and data coverage gates. Existing ChatGPT alerts are separate from this website. Never substitute this model for marine hazard bulletins.")
