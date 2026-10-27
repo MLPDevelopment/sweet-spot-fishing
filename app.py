@@ -3,13 +3,14 @@ from datetime import date, timedelta, datetime
 import html
 import base64
 import json
+import requests
 from pathlib import Path
 import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.5.4 COLUMN HEADERS"
-BUILD_ID = "2026-10-26-v254"
+APP_VERSION = "2.6 TIDE CHARTS"
+BUILD_ID = "2026-10-26-v26"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -330,6 +331,92 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Charts are independent from the scoring model, which retains its existing references.
+TIDE_CHART_STATIONS = {
+    "Port O'Connor": ("8773701", "Port O'Connor Marina Area"),
+    "Port Aransas": ("8775083", "Redfish Bay / Aransas Pass"),
+    "South Padre Island": ("8779280", "Realitos Peninsula / Lower Laguna Madre"),
+}
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_chart_tides(station_id, day_iso):
+    """Hourly NOAA predicted water levels for the selected local calendar day."""
+    params = {
+        "begin_date": day_iso.replace("-", ""),
+        "end_date": day_iso.replace("-", ""),
+        "station": station_id,
+        "product": "predictions",
+        "datum": "MLLW",
+        "time_zone": "lst_ldt",
+        "units": "english",
+        "interval": "h",
+        "format": "json",
+        "application": "PuteysBayFishingOutlook",
+    }
+    response = requests.get(
+        "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter",
+        params=params,
+        timeout=20,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if "error" in payload:
+        raise ValueError(str(payload["error"]))
+    return payload.get("predictions", [])
+
+def display_tide_chart(day_iso, region):
+    station_id, station_label = TIDE_CHART_STATIONS[region]
+    station_url = f"https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id={station_id}"
+    st.markdown('<div class="sectionhead">Predicted bay tides</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"**{station_label}** · NOAA station [{station_id}]({station_url}) · "
+        f"{datetime.fromisoformat(day_iso):%A, %B %d, %Y}"
+    )
+    st.caption("Hourly tide height in feet above Mean Lower Low Water (MLLW). "
+               "Shaded period: 7:00–11:00 a.m., approximate morning fishing window.")
+    try:
+        points = get_chart_tides(station_id, day_iso)
+        chart_data = []
+        for point in points:
+            stamp = datetime.strptime(point["t"], "%Y-%m-%d %H:%M")
+            if stamp.date().isoformat() == day_iso:
+                chart_data.append({"time": stamp, "height_ft": float(point["v"])})
+        if len(chart_data) < 2:
+            st.info("NOAA has not provided enough hourly predictions for this station and date. "
+                    "Use the station link above to view available tide tables.")
+            return
+        import pandas as pd
+        import altair as alt
+        df = pd.DataFrame(chart_data).sort_values("time")
+        start = datetime.fromisoformat(day_iso + "T00:00:00")
+        morning_start = start.replace(hour=7)
+        morning_end = start.replace(hour=11)
+        shade_df = pd.DataFrame([{"from": morning_start, "to": morning_end}])
+        base = alt.Chart(df)
+        highlight = alt.Chart(shade_df).mark_rect(color="#d6ece7", opacity=0.65).encode(
+            x=alt.X("from:T", title="Local time (Central)"),
+            x2="to:T",
+        )
+        curve = base.mark_line(color="#156e70", strokeWidth=3, point=True).encode(
+            x=alt.X("time:T", title="Local time (Central)",
+                    axis=alt.Axis(format="%I %p", tickCount=7)),
+            y=alt.Y("height_ft:Q", title="Predicted water level (ft MLLW)",
+                    scale=alt.Scale(zero=False)),
+            tooltip=[alt.Tooltip("time:T", title="Time", format="%I:%M %p"),
+                     alt.Tooltip("height_ft:Q", title="Height (ft)", format=".2f")],
+        )
+        st.altair_chart((highlight + curve).properties(height=230).interactive(),
+                        use_container_width=True)
+        window = df[(df["time"] >= morning_start) & (df["time"] <= morning_end)]
+        if len(window) >= 2:
+            change = window.iloc[-1]["height_ft"] - window.iloc[0]["height_ft"]
+            direction = "rising" if change > .01 else ("falling" if change < -.01 else "relatively flat")
+            st.caption(f"7–11 a.m. predicted change: {change:+.2f} ft ({direction}). "
+                       "Wind-driven water levels and local back-bay delays can differ from predictions.")
+    except Exception as exc:
+        st.warning("NOAA hourly tide predictions could not be loaded for this station/date. "
+                   "Open the station link above for NOAA's available predictions.")
+
 # Daily conditions strip
 st.markdown('<div class="sectionbar">Daily conditions snapshot</div>', unsafe_allow_html=True)
 card_cols = st.columns(5, gap='small')
@@ -346,6 +433,8 @@ with card_cols[3]:
     st.markdown(f'<div class="metric-card"><div class="label">Water temperature</div><div class="value">{wt_str}</div><div class="sub">{wt_sub}</div></div>', unsafe_allow_html=True)
 with card_cols[4]:
     st.markdown(f'<div class="metric-card"><div class="label">Moon phase</div><div class="value"><span class="moonicon">{moon_icon(phase)}</span> {phase}</div><div class="sub">Approx. illumination {illum}%</div></div>', unsafe_allow_html=True)
+
+display_tide_chart(chosen_date, chosen_location)
 
 if r['weekday'] in ('Saturday', 'Sunday'):
     st.info('Weekend excluded: this day is not eligible for a fishing recommendation.')
