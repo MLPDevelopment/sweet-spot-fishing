@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.5.1 IMAGE FIX"
-BUILD_ID = "2026-10-26-v251"
+APP_VERSION = "2.5.2 SNOOK"
+BUILD_ID = "2026-10-26-v252"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -427,7 +427,7 @@ seasonal = [
     ('Speckled trout', 'trout.png', 'Spring–fall', 'Shallow grass-bed opportunities in warmer weather; fish shift habitat as temperatures change.', 'https://tpwd.texas.gov/huntwild/wild/species/strout/'),
     ('Southern flounder', 'flounder.png', 'October–December', 'Autumn migration from bays toward passes and Gulf waters. Check current seasonal harvest rules.', 'https://tpwd.texas.gov/huntwild/wild/species/flounder/'),
     ('Tarpon', 'tarpon.png', 'Summer–early fall', 'Warm-season Gulf Coast migratory opportunities, especially near passes and coastal waters.', 'https://tpwd.texas.gov/huntwild/wild/species/tarpon/'),
-    ('Snook', None, 'Spring–fall', 'Warm-water inshore opportunities around the Lower Laguna Madre and South Texas coast.', 'https://tpwd.texas.gov/huntwild/wild/species/snook/'),
+    ('Snook', 'snook.png', 'Spring–fall', 'Warm-water inshore opportunities around the Lower Laguna Madre and South Texas coast.', 'https://tpwd.texas.gov/huntwild/wild/species/snook/'),
 ]
 for row_start in range(0, len(seasonal), 3):
     season_cols = st.columns(3, gap='small')
