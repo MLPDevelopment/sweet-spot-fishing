@@ -8,8 +8,8 @@ import streamlit as st
 from engine import REGIONS, WEIGHTS, calculate
 from sources import get_weather, get_tides, get_marine, approximate_illumination, moon_phase_name
 
-APP_VERSION = "2.5.3 FISH IMAGE FIX"
-BUILD_ID = "2026-10-26-v253"
+APP_VERSION = "2.5.4 COLUMN HEADERS"
+BUILD_ID = "2026-10-26-v254"
 
 st.set_page_config(page_title="Putey's Bay Fishing Outlook", page_icon="🌊", layout="wide", initial_sidebar_state="collapsed")
 ASSETS = Path(__file__).parent / "assets"
@@ -244,9 +244,22 @@ if 'selected' not in st.session_state:
 
 with st.container(key="desktop_scoreboard"):
     headers = st.columns([1.15, 1.55, 1.55, 1.55], gap='small')
-    for col, label in zip(headers, ['DAY', "PORT O’CONNOR", 'PORT ARANSAS', 'SOUTH PADRE']):
+    with headers[0]:
+        st.markdown('<div class="scorelabel" style="text-align:center">DAY</div>', unsafe_allow_html=True)
+    region_header_labels = [
+        ("PORT O’CONNOR", "#156e70", "#e6f2f1"),
+        ('PORT ARANSAS', '#b46d35', '#fcf1e8'),
+        ('SOUTH PADRE', '#456aa1', '#eaf1fc'),
+    ]
+    for col, (label, fg, bg) in zip(headers[1:], region_header_labels):
         with col:
-            st.markdown(f'<div class="scorelabel">{label}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="text-align:center;padding:10px 12px;border-radius:12px;'
+                f'background:{bg};color:{fg};border:1px solid {fg}22;'
+                f'font-size:.80rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;'
+                f'box-shadow:0 1px 0 rgba(0,0,0,.02) inset;">{label}</div>',
+                unsafe_allow_html=True,
+            )
 
     for offset in range(10):
         dt = date.today() + timedelta(days=offset)
